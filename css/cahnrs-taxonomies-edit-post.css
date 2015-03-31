@@ -1,0 +1,43 @@
+/** Hide the "Add New" links for CAHNRS Taxonomies. */
+#cahnrs_unit-adder,
+#topic-adder {
+	display: none;
+}
+
+/* Try to make the list of units a little less unwieldy.
+#cahnrs_unitchecklist > li > label {
+	display: block;
+	font-weight: bold;
+	position: relative;
+}
+#cahnrs_unitchecklist > li > label:after {
+	color: #aaa;
+	content: '\f140';
+	font: 400 20px/1 dashicons;
+	position: absolute;
+	right: 3px;
+	top: 2px;
+}
+#cahnrs_unitchecklist > li.open > label:after {
+	content: '\f142';
+}
+#cahnrs_unitchecklist > li.open > label:hover:after {
+	color: #777;
+}
+#cahnrs_unitchecklist > li > label input:not(:checked) {
+	display: none;
+}
+.categorydiv ul#cahnrs_unitchecklist ul {
+	display: none;
+	margin-left: 0;
+}
+#cahnrs_unitchecklist .children li label {
+	display: block;
+	padding-left: 23px;
+	position: relative;
+}
+#cahnrs_unitchecklist .children input {
+	left: 0;
+	margin-top: 3px;
+	position: absolute;
+} */
