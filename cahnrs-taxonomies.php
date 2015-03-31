@@ -267,11 +267,15 @@ class CAHNRSWP_Taxonomies {
 	 */
 	public function admin_enqueue_scripts( $hook ) {
 
-		if ( 'post-new.php' == $hook || 'post.php' == $hook ) {
-			wp_enqueue_style( 'cahnrs-taxonomies-style', plugins_url( 'css/cahnrs-taxonomies-edit-post.css', __FILE__ ) );
-			//wp_enqueue_script( 'cahnrs-units-script', plugins_url( 'js/cahnrs-taxonomies-edit-post.js', __FILE__ ) );
+		if ( 'edit-tags.php' !== $hook && 'post.php' !== $hook && 'post-new.php' !== $hook ) {
+			return;
 		}
 
+		if ( 'post-new.php' === $hook || 'post.php' === $hook ) {
+			wp_enqueue_style( 'cahnrs-taxonomies-style', plugins_url( 'css/cahnrs-taxonomies-edit-post.css', __FILE__ ) );
+			//wp_enqueue_script( 'cahnrs-units-script', plugins_url( 'js/cahnrs-units.js', __FILE__ ) );
+		}
+		
 		if ( ( $this->cahnrs_units === get_current_screen()->taxonomy || $this->cahnrs_topics === get_current_screen()->taxonomy ) && ! current_user_can( 'manage_network' ) ) {
 			wp_enqueue_style( 'cahnrs-taxonomies-edit-tags-style', plugins_url( 'css/cahnrs-taxonomies-edit-tags.css', __FILE__ ) );
 		}
