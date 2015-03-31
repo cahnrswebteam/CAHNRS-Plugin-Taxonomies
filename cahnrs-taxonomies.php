@@ -392,7 +392,6 @@ class CAHNRSWP_Taxonomies {
 					}
 				}
 				wp_reset_postdata();
-				wp_reset_query();
 				
 			} else { // No leader selected, clear out any leader meta values that match this item's slug.
 
@@ -406,7 +405,6 @@ class CAHNRSWP_Taxonomies {
 					}
 				}
 				wp_reset_postdata();
-				wp_reset_query();
 
 			} // $_POST['item_leader']
 
@@ -433,7 +431,6 @@ class CAHNRSWP_Taxonomies {
 					}
 				}
 				wp_reset_postdata();
-				wp_reset_query();
 				
 			} else { // No co-leader selected, clear out any co-leader meta values that match this item's slug.
 
@@ -447,7 +444,6 @@ class CAHNRSWP_Taxonomies {
 					}
 				}
 				wp_reset_postdata();
-				wp_reset_query();
 
 			} // $_POST['item_co_leader']
 
