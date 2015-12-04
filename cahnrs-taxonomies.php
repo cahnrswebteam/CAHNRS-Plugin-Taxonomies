@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: CAHNRS Units and Topics
-Version: 0.1.0
+Version: 0.1.1
 Description: Taxonomies for CAHNRS content.
 Author:	CAHNRS, philcable
 */
@@ -39,17 +39,11 @@ class CAHNRSWP_Taxonomies {
 		add_action( 'load-edit-tags.php', array( $this, 'compare' ), 10 );
 		add_action( 'load-edit-tags.php', array( $this, 'display_edit_tags' ), 11 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
-		add_action( 'cahnrs_unit_edit_form_fields', array( $this, 'edit_form_fields' ), 10, 2 );
-		add_action( 'topic_edit_form_fields', array( $this, 'edit_form_fields' ), 10, 2 );
-		add_action( 'edited_cahnrs_unit', array( $this, 'save_cahnrs_taxonomy_meta' ), 10, 2 );
-		add_action( 'edited_topic', array( $this, 'save_cahnrs_taxonomy_meta' ), 10, 2 );
-		add_filter( 'manage_taxonomies_for_wsuwp_people_profile_columns', array( $this, 'wsuwp_people_profile_columns' ) );
-		add_filter( 'json_prepare_post', array( $this, 'json_prepare_post' ), 10, 3 );
 
 	}
 
 	/**
-	 * Pre-load CAHNRS Units on plugin activation.
+	 * Pre-load CAHNRS taxonomies on plugin activation.
 	 */
 	public function cahnrs_taxonomies_activate() {
 
@@ -59,7 +53,7 @@ class CAHNRSWP_Taxonomies {
 	}
 
 	/**
-	 * Pre-load CAHNRS Units on plugin activation, part two.
+	 * Pre-load CAHNRS taxonomies on plugin activation, part two.
 	 */
 	public function admin_init() {
 
@@ -97,10 +91,11 @@ class CAHNRSWP_Taxonomies {
 			'hierarchical' => true,
 			'show_ui'      => true,
 			'show_in_menu' => true,
+			'show_in_rest' => true,
 			'query_var'    => $this->cahnrs_units,
 		);
 
-		register_taxonomy( $this->cahnrs_units, array( 'wsuwp_people_profile'/*, 'post', 'page', 'attachment'*/), $units_args );
+		register_taxonomy( $this->cahnrs_units, array(/*'post', 'page', 'attachment'*/), $units_args );
 
 		$topics_args = array(
 			'labels'       => array(
@@ -119,10 +114,11 @@ class CAHNRSWP_Taxonomies {
 			'hierarchical' => true,
 			'show_ui'      => true,
 			'show_in_menu' => true,
+			'show_in_rest' => true,
 			'query_var'    => $this->cahnrs_topics,
 		);
 
-		register_taxonomy( $this->cahnrs_topics, array( 'wsuwp_people_profile'/*, 'post', 'page', 'attachment'*/ ), $topics_args );
+		register_taxonomy( $this->cahnrs_topics, array(/*'post', 'page', 'attachment'*/), $topics_args );
 
 	}
 
@@ -414,203 +410,6 @@ class CAHNRSWP_Taxonomies {
 		if ( ( $this->cahnrs_units === get_current_screen()->taxonomy || $this->cahnrs_topics === get_current_screen()->taxonomy ) && ! current_user_can( 'manage_network' ) ) {
 			wp_enqueue_style( 'cahnrs-taxonomies-edit-tags-style', plugins_url( 'css/cahnrs-taxonomies-edit-tags.css', __FILE__ ) );
 		}
-
-	}
-
-	/**
-	 * Add a metabox for selecting the leader of a unit.
-	 */
-	public function edit_form_fields( $term, $taxonomy ) {
-
-		if ( post_type_exists( 'wsuwp_people_profile' ) ) {
-
-			echo '<tr class="form-field">
-			<th scope="row" valign="top"><label for="item_leader">Leader</label></th>
-			<td>';
-			echo '<select name="item_leader" id="item_leader">
-			<option value="">Select</option>';
-
-			$item_posts_args = array(
-				'posts_per_page' => -1,
-				'post_type' => 'wsuwp_people_profile',
-				'tax_query' => array(
-					array(
-						'taxonomy' => $taxonomy,
-						'field'    => 'id',
-						'terms'    => $term->term_id,
-					),
-				),
-				'order'     => 'ASC',
-				'orderby'   => 'meta_value',
-				'meta_key'  => '_wsuwp_profile_ad_name_last',
-			);
-
-			$item_posts = get_posts( $item_posts_args );
-
-			if ( $item_posts ) :
-				foreach ( $item_posts as $post ) :
-					$leader = get_post_meta( $post->ID, '_wsuwp_profile_leader_of', true );
-					echo '<option value="' . $post->ID . '" ';
-					if ( $leader === $term->slug ) echo 'selected="selected"';
-					echo '>' . get_the_title( $post->ID ) . '</option>';
-				endforeach;
-			endif;
-
-			echo '</select>
-			</td>
-			</tr>';
-
-			if ( $this->cahnrs_units === $taxonomy ) { // Limit this to the CAHNRS Unit taxonomy for now
-				// Co- or assistant leaders
-				echo '<tr class="form-field">
-				<th scope="row" valign="top"><label for="item_co_leader">Co- or Assistant Leader(s)</label></th>
-				<td>';
-				echo '<select name="item_co_leader[]" id="item_co_leader" multiple style="min-height:300px;">';
-
-				if ( $item_posts ) :
-					foreach ( $item_posts as $post ) :
-						$co_leader = get_post_meta( $post->ID, '_wsuwp_profile_co_leader_of', true );
-						echo '<option value="' . $post->ID . '" ';
-						if ( $co_leader === $term->slug ) echo 'selected="selected"';
-						echo '>' . get_the_title( $post->ID ) . '</option>';
-					endforeach;
-				endif;
-
-				echo '</select>
-				</td>
-				</tr>';
-			}
-
-		}
-
-	}
-
-	/**
-	 * Save the leader meta.
-	 */
-	public function save_cahnrs_taxonomy_meta( $term_id ) {
-
-		if ( post_type_exists( 'wsuwp_people_profile' ) ) {
-
-			// Get the term.
-			$term = get_term( $term_id, $_POST['taxonomy'] );
-
-			// Loop args.
-			$updater_args = array(
-				'post_type' => 'wsuwp_people_profile',
-				'posts_per_page' => -1,
-				'tax_query' => array(
-					array(
-						'taxonomy' => $_POST['taxonomy'],
-						'field'    => 'id',
-						'terms'    => $term_id,
-					),
-				),
-			);
-
-			$leader_args = $updater_args;
-			$co_leader_args = $updater_args;
-
-			// A leader was selected.
-			if ( isset( $_POST['item_leader'] ) && is_numeric( $_POST['item_leader'] ) ) {
-
-				// Save the term's slug as appropriate meta value to the selected profile.
-				add_post_meta( $_POST['item_leader'], '_wsuwp_profile_leader_of', sanitize_text_field( $term->slug ) );
-
-				// Delete leader meta value from other profiles.
-				$leader_args['post__not_in'] = array( $_POST['item_leader'] );
-				$leader_update_query = new WP_Query( $leader_args );
-				if ( $leader_update_query->have_posts() ) {
-					while( $leader_update_query->have_posts() ) {
-						$leader_update_query->the_post();
-						delete_post_meta( $leader_update_query->post->ID, '_wsuwp_profile_leader_of' );
-					}
-				}
-				wp_reset_postdata();
-				
-			} else { // No leader selected, clear out any leader meta values that match this item's slug.
-
-				$leader_update_query = new WP_Query( $updater_args );
-				if ( $leader_update_query->have_posts() ) {
-					while( $leader_update_query->have_posts() ) {
-						$leader_update_query->the_post();
-						if ( sanitize_text_field( $term->slug ) === get_post_meta( $leader_update_query->post->ID, '_wsuwp_profile_leader_of', true ) ) {
-							delete_post_meta( $leader_update_query->post->ID, '_wsuwp_profile_leader_of' );
-						}
-					}
-				}
-				wp_reset_postdata();
-
-			} // $_POST['item_leader']
-
-			// A co-leader was selected
-			if ( isset( $_POST['item_co_leader'] ) ) {
-
-				$co_leaders = array();
-
-				// Save the term's slug as appropriate meta value to the selected profile(s).
-				foreach ( $_POST['item_co_leader'] as $profile_id ) {
-					if ( is_numeric( $profile_id ) ) {
-						add_post_meta( $profile_id, '_wsuwp_profile_co_leader_of', sanitize_text_field( $term->slug ) );
-						$co_leaders[] = $profile_id;
-					}
-				}
-
-				// Delete co-leader meta value from other profiles.
-				$co_leader_args['post__not_in'] = $co_leaders;
-				$co_leader_update_query = new WP_Query( $co_leader_args );
-				if ( $co_leader_update_query->have_posts() ) {
-					while( $co_leader_update_query->have_posts() ) {
-						$co_leader_update_query->the_post();
-						delete_post_meta( $co_leader_update_query->post->ID, '_wsuwp_profile_co_leader_of' );
-					}
-				}
-				wp_reset_postdata();
-				
-			} else { // No co-leader selected, clear out any co-leader meta values that match this item's slug.
-
-				$co_leader_update_query = new WP_Query( $updater_args );
-				if ( $co_leader_update_query->have_posts() ) {
-					while( $co_leader_update_query->have_posts() ) {
-						$co_leader_update_query->the_post();
-						if ( sanitize_text_field( $term->slug ) === get_post_meta( $co_leader_update_query->post->ID, '_wsuwp_profile_co_leader_of', true ) ) {
-							delete_post_meta( $co_leader_update_query->post->ID, '_wsuwp_profile_co_leader_of' );
-						}
-					}
-				}
-				wp_reset_postdata();
-
-			} // $_POST['item_co_leader']
-
-		} // post_type_exists( 'wsuwp_people_profile' )
-
-	}
-
-	/**
-	 * Show a column for CAHNRS Units and Topics on the "All Profiles" screen.
-	 */
-	public function wsuwp_people_profile_columns( $taxonomies ) {
-
-    $taxonomies[] = $this->cahnrs_units;
-		$taxonomies[] = $this->cahnrs_topics;
-
-    return $taxonomies;
-
-	}
-
-	/**
-	 * Include meta in the REST API output.
-	 */
-	public function json_prepare_post( $post_response, $post, $context ) {
-
-		if ( 'wsuwp_people_profile' !== $post['post_type'] ) {
-			return $post_response;
-		}
-
-		$post_response['_wsuwp_profile_leader_of'] = get_post_meta( $post['ID'], '_wsuwp_profile_leader_of', true );
-		$post_response['_wsuwp_profile_co_leader_of'] = get_post_meta( $post['ID'], '_wsuwp_profile_co_leader_of', true );
-
-		return $post_response;
 
 	}
 
